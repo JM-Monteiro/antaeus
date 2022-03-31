@@ -1,8 +1,6 @@
 package io.pleo.antaeus.core.services
 
-import io.pleo.antaeus.core.exceptions.CurrencyMismatchException
-import io.pleo.antaeus.core.exceptions.CustomerNotFoundException
-import io.pleo.antaeus.core.exceptions.NetworkException
+import io.pleo.antaeus.core.exceptions.*
 import io.pleo.antaeus.core.external.PaymentProvider
 import io.pleo.antaeus.models.Invoice
 import io.pleo.antaeus.models.InvoiceNote
@@ -10,46 +8,69 @@ import io.pleo.antaeus.models.InvoiceStatus
 
 class BillingService(
     private val paymentProvider: PaymentProvider,
-    private val invoiceService: InvoiceService
+    private val invoiceService: InvoiceService,
+    private val customerService: CustomerService
 ) {
 
 
     // checks the database for the non-processed invoices and charges the client the necessary amount
     //TODO: cross check dbs for currency and customer
-    fun processAllPendingInvoices():List<Invoice>{
+    fun processAllPendingInvoices(): List<Invoice> {
         val pendingInvoices = invoiceService.fetchAll(InvoiceStatus.PENDING.toString())
 
         val resultList = mutableListOf<Invoice>()
 
-        for (invoice in pendingInvoices){
+        for (invoice in pendingInvoices) {
+            resultList.add(executePayment(invoice))
+        }
+        return resultList
+    }
 
-            var note = InvoiceNote.OTHER
-            var status = false
+    fun processPendingInvoice(id:Int):Invoice{
+        val invoice = invoiceService.fetch(id)
 
-            try{
+        if(invoice.status==InvoiceStatus.PAID){
+            throw InvoiceAlreadyPaidException(invoice.id)
+        }else{
+            return executePayment(invoice)
+        }
+    }
+
+
+    private fun executePayment(invoice: Invoice): Invoice {
+        var note = InvoiceNote.OTHER
+        var status = false
+
+        try {
+            val customer = customerService.fetch(invoice.customerId)
+
+            if (customer.currency != invoice.amount.currency) {
+                note = InvoiceNote.DIFFERENTCURRENCY
+            } else {
                 status = paymentProvider.charge(invoice)
-                if(!status){
+                if (!status) {
                     note = InvoiceNote.NOFUNDS
                 }
-            }catch(e: Exception) {
-                note = if (e is NetworkException){
+            }
+        } catch (e: Exception) {
+            note = when (e) {
+                is NetworkException -> {
                     InvoiceNote.NETWORKERROR
-                }else{
-                    InvoiceNote.OTHER
                 }
-            }finally {
-                if(status){
-                    resultList.add(invoiceService.paidInvoice(invoice))
-                }else{
-                    resultList.add(invoiceService.failedPaymentInvoice(invoice,note))
+                is CustomerNotFoundException -> {
+                    InvoiceNote.NOCUSTOMER
+                }
+                else -> {
+                    InvoiceNote.OTHER
                 }
             }
         }
 
+        return if (status) {
+            invoiceService.paidInvoice(invoice)
+        } else {
+            invoiceService.failedPaymentInvoice(invoice, note)
+        }
 
-        return resultList
     }
-
-
-
 }
