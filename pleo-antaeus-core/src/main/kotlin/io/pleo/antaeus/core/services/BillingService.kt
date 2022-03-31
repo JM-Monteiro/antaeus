@@ -38,7 +38,7 @@ class BillingService(
 
 
     private fun executePayment(invoice: Invoice): Invoice {
-        var note = InvoiceNote.OTHER
+        var note = InvoiceNote.NONE
         var status = false
 
         try {
@@ -60,6 +60,8 @@ class BillingService(
                 is CustomerNotFoundException -> {
                     InvoiceNote.NOCUSTOMER
                 }
+
+                //prevent unsupported exceptions
                 else -> {
                     InvoiceNote.OTHER
                 }

@@ -49,6 +49,7 @@ class AntaeusDal(private val db: Database) {
                     it[this.currency] = amount.currency.toString()
                     it[this.status] = status.toString()
                     it[this.customerId] = customer.id
+                    it[this.note] = InvoiceNote.NONE.note
                 } get InvoiceTable.id
         }
 
@@ -58,6 +59,7 @@ class AntaeusDal(private val db: Database) {
     fun paidInvoice(id:Int):Invoice?{
         InvoiceTable.update({InvoiceTable.id eq id}){
             it[this.status] = InvoiceStatus.PAID.toString()
+            it[this.note] = InvoiceNote.NONE.note
         }
         return fetchInvoice(id)
     }
