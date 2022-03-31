@@ -8,6 +8,7 @@ import io.javalin.Javalin
 import io.javalin.apibuilder.ApiBuilder.get
 import io.javalin.apibuilder.ApiBuilder.path
 import io.pleo.antaeus.core.exceptions.EntityNotFoundException
+import io.pleo.antaeus.core.exceptions.InvoiceAlreadyPaidException
 import io.pleo.antaeus.core.services.CustomerService
 import io.pleo.antaeus.core.services.InvoiceService
 import mu.KotlinLogging
@@ -32,6 +33,12 @@ class AntaeusRest(
             exception(EntityNotFoundException::class.java) { _, ctx ->
                 ctx.status(404)
             }
+
+
+            exception(InvoiceAlreadyPaidException::class.java) { _, ctx ->
+                ctx.status(409)
+            }
+
             // Unexpected exception: return HTTP 500
             exception(Exception::class.java) { e, _ ->
                 logger.error(e) { "Internal server error" }
