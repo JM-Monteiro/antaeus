@@ -5,6 +5,7 @@ import io.pleo.antaeus.core.exceptions.CustomerNotFoundException
 import io.pleo.antaeus.core.exceptions.NetworkException
 import io.pleo.antaeus.core.external.PaymentProvider
 import io.pleo.antaeus.models.Invoice
+import io.pleo.antaeus.models.InvoiceNote
 import io.pleo.antaeus.models.InvoiceStatus
 
 class BillingService(
@@ -18,25 +19,35 @@ class BillingService(
     fun processAllPendingInvoices():List<Invoice>{
         val pendingInvoices = invoiceService.fetchAll(InvoiceStatus.PENDING.toString())
 
+        val resultList = mutableListOf<Invoice>()
+
         for (invoice in pendingInvoices){
 
-            val note:String
+            var note = InvoiceNote.OTHER
+            var status = false
 
-            val status: Boolean = try{
-                paymentProvider.charge(invoice)
+            try{
+                status = paymentProvider.charge(invoice)
+                if(!status){
+                    note = InvoiceNote.NOFUNDS
+                }
             }catch(e: Exception) {
-                note = e.toString()
-                false
+                note = if (e is NetworkException){
+                    InvoiceNote.NETWORKERROR
+                }else{
+                    InvoiceNote.OTHER
+                }
+            }finally {
+                if(status){
+                    resultList.add(invoiceService.paidInvoice(invoice))
+                }else{
+                    resultList.add(invoiceService.failedPaymentInvoice(invoice,note))
+                }
             }
-
-            if(status){
-                //TODO:change to paid
-            }else{
-                //TODO:publish a note and keep pending
-            }
-
         }
-        return emptyList()
+
+
+        return resultList
     }
 
 

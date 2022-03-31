@@ -7,11 +7,7 @@
 
 package io.pleo.antaeus.data
 
-import io.pleo.antaeus.models.Currency
-import io.pleo.antaeus.models.Customer
-import io.pleo.antaeus.models.Invoice
-import io.pleo.antaeus.models.InvoiceStatus
-import io.pleo.antaeus.models.Money
+import io.pleo.antaeus.models.*
 import org.jetbrains.exposed.sql.*
 import org.jetbrains.exposed.sql.transactions.transaction
 
@@ -66,9 +62,9 @@ class AntaeusDal(private val db: Database) {
         return fetchInvoice(id)
     }
 
-    fun failedPaymentInvoice(id:Int,note:String):Invoice?{
+    fun failedPaymentInvoice(id:Int,note:InvoiceNote):Invoice?{
         InvoiceTable.update({InvoiceTable.id eq id}){
-            it[this.note] = note
+            it[this.note] = note.note
         }
         return fetchInvoice(id)
     }
