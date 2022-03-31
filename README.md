@@ -46,8 +46,8 @@ If you use homebrew on MacOS `brew install sqlite`.
 Install docker for your platform
 
 ```
-docker build -t antaeus
-docker run antaeus
+docker build -t antaeus .
+docker run -p 7070:7000 --name antaeus antaeus
 ```
 
 ### App Structure
