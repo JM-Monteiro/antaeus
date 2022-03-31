@@ -20,20 +20,25 @@ class BillingServiceTest {
 
     //CORRECT VALUE
     private val inv1 = Invoice(1,100, Money(BigDecimal.valueOf(40),Currency.EUR),InvoiceStatus.PENDING,InvoiceNote.NONE)
+    private val inv11 = Invoice(1,100, Money(BigDecimal.valueOf(40),Currency.EUR),InvoiceStatus.PAID,InvoiceNote.NONE)
 
     //DIFFERENT CURRENCY
     private val inv2 = Invoice(2,100, Money(BigDecimal.valueOf(50),Currency.DKK),InvoiceStatus.PENDING,InvoiceNote.NONE)
+    private val inv21 = Invoice(2,100, Money(BigDecimal.valueOf(50),Currency.DKK),InvoiceStatus.PENDING,InvoiceNote.DIFFERENTCURRENCY)
 
     //ALREADY PAID
     private val inv3 = Invoice(3,100, Money(BigDecimal.valueOf(50),Currency.EUR),InvoiceStatus.PAID,InvoiceNote.NONE)
 
     //NO USER
     private val inv4 = Invoice(4,404, Money(BigDecimal.valueOf(50),Currency.EUR),InvoiceStatus.PENDING,InvoiceNote.NONE)
+    private val inv41 = Invoice(4,404, Money(BigDecimal.valueOf(50),Currency.EUR),InvoiceStatus.PENDING,InvoiceNote.NOCUSTOMER)
 
     //NO FUNDS
     private val inv5 = Invoice(5,100, Money(BigDecimal.valueOf(5000000),Currency.EUR),InvoiceStatus.PENDING,InvoiceNote.NONE)
+    private val inv51 = Invoice(5,100, Money(BigDecimal.valueOf(5000000),Currency.EUR),InvoiceStatus.PENDING,InvoiceNote.NOFUNDS)
 
     private val pendingList = listOf(inv1,inv2,inv4,inv5)
+    private val responseList = listOf(inv11,inv21,inv41,inv51)
 
     private val customerServiceMock = mockk<CustomerService> {
         every { fetch(404) } throws CustomerNotFoundException(404)
@@ -49,6 +54,10 @@ class BillingServiceTest {
         every { fetch(4) } returns inv4
         every { fetch(5) } returns inv5
         every { fetchAll(InvoiceStatus.PENDING.toString()) } returns pendingList
+        every {paidInvoice(inv1)} returns inv11
+        every {failedPaymentInvoice(inv2,InvoiceNote.DIFFERENTCURRENCY)} returns inv21
+        every {failedPaymentInvoice(inv4,InvoiceNote.NOCUSTOMER)} returns inv41
+        every {failedPaymentInvoice(inv5,InvoiceNote.NOFUNDS)} returns inv51
     }
 
 
@@ -65,6 +74,24 @@ class BillingServiceTest {
 
 
     @Test
+    fun `will succeed`(){
+        val returnedInv = billingService.processPendingInvoice(1)
+        assert(returnedInv == inv11)
+    }
+
+    @Test
+    fun `will succeed batch`(){
+        val resp = billingService.processAllPendingInvoices()
+        assert(resp == responseList)
+    }
+
+    @Test
+    fun `will fail if different currency`(){
+        val returnedInv = billingService.processPendingInvoice(2)
+        assert(returnedInv == inv21)
+    }
+
+    @Test
     fun `will throw if already paid`(){
         assertThrows<InvoiceAlreadyPaidException> {
             billingService.processPendingInvoice(3)
@@ -72,10 +99,17 @@ class BillingServiceTest {
     }
 
     @Test
-    fun `will throw if no funds`(){
-        assertThrows<InvoiceAlreadyPaidException> {
-            billingService.processPendingInvoice(3)
-        }
+    fun `will fail if no customer`(){
+        val returnedInv = billingService.processPendingInvoice(4)
+        assert(returnedInv == inv41)
     }
+
+    @Test
+    fun `will fail if no funds`(){
+        val returnedInv = billingService.processPendingInvoice(5)
+        assert(returnedInv == inv51)
+    }
+
+
 
 }
