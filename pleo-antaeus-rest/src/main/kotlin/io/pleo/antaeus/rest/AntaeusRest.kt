@@ -41,6 +41,7 @@ class AntaeusRest(
                 ctx.status(409)
             }
 
+
             // Unexpected exception: return HTTP 500
             exception(Exception::class.java) { e, _ ->
                 logger.error(e) { "Internal server error" }
