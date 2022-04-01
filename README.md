@@ -91,15 +91,17 @@ an invoice that was already paid it returns a 409 HTTP error.
 * Created unit tests for the Billing Service.
 * Changed the Docker port mapping to 7070 (port conflict related).
 * Create the necessary exceptions to handle all errors.
-* Had fun and learned more about Kotlin
+* Had fun learning more about Kotlin and solving this challange.
+
 
 
 ---
-## 3 - Next Improvements
+## 3 - Possible Next Improvements
 * Parallel processing of all pending invoices.
 * Distribute the monolithic architecture by the different services to scale the services appropriately and prevent total loss of service.
 * Separate the database from the application.
 ---
+
 ## Antaeus
 
 Antaeus (/ænˈtiːəs/), in Greek mythology, a giant of Libya, the son of the sea god Poseidon and the Earth goddess Gaia. He compelled all strangers who were passing through the country to wrestle with him. Whenever Antaeus touched the Earth (his mother), his strength was renewed, so that even if thrown to the ground, he was invincible. Heracles, in combat with him, discovered the source of his strength and, lifting him up from Earth, crushed him to death.
