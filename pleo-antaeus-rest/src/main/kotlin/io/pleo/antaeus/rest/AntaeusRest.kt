@@ -5,8 +5,7 @@
 package io.pleo.antaeus.rest
 
 import io.javalin.Javalin
-import io.javalin.apibuilder.ApiBuilder.get
-import io.javalin.apibuilder.ApiBuilder.path
+import io.javalin.apibuilder.ApiBuilder.*
 import io.pleo.antaeus.core.exceptions.EntityNotFoundException
 import io.pleo.antaeus.core.exceptions.InvoiceAlreadyPaidException
 import io.pleo.antaeus.core.services.BillingService
@@ -66,7 +65,7 @@ class AntaeusRest(
                 // V1
                 path("v1") {
                     path("invoices") {
-                        // URL: /rest/v1/invoices
+                        // URL: /rest/v1/invoices?status={:status}
                         get {
                             it.json(invoiceService.fetchAll(it.queryParam("status")))
                         }
@@ -88,6 +87,19 @@ class AntaeusRest(
                         // URL: /rest/v1/customers/{:id}
                         get(":id") {
                             it.json(customerService.fetch(it.pathParam("id").toInt()))
+                        }
+                    }
+
+
+                    path("billing") {
+                        // URL: /rest/v1/billing
+                        post() {
+                            it.json(billingService.billProcessingTrigger())
+                        }
+
+                        // URL: /rest/v1/billing/{:id}
+                        post(":id") {
+                            it.json(billingService.processPendingInvoice(it.pathParam("id").toInt()))
                         }
                     }
                 }

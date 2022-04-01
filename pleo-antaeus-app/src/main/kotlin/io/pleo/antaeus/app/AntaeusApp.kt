@@ -8,7 +8,6 @@
 package io.pleo.antaeus.app
 
 import getPaymentProvider
-import getTimeTilNextMonth
 import io.pleo.antaeus.core.services.BillingService
 import io.pleo.antaeus.core.services.CustomerService
 import io.pleo.antaeus.core.services.InvoiceService
@@ -26,7 +25,8 @@ import org.jetbrains.exposed.sql.transactions.transaction
 import setupInitialData
 import java.io.File
 import java.sql.Connection
-import kotlin.concurrent.timer
+import java.util.*
+import kotlin.concurrent.schedule
 
 fun main() {
     // The tables to create in the database.
@@ -69,9 +69,12 @@ fun main() {
         invoiceService = invoiceService,
         customerService = customerService)
 
-    val logger = KotlinLogging.logger{}
-    logger.info { getTimeTilNextMonth() }
-    getTimeTilNextMonth()
+
+    Timer("BillProcessing",false).schedule(billingService.getTimeTilNextMonth()){
+        billingService.billProcessingTrigger()
+    }
+
+
 
     // Create REST web service
     AntaeusRest(

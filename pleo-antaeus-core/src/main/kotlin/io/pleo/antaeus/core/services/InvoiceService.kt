@@ -10,8 +10,13 @@ import io.pleo.antaeus.data.AntaeusDal
 import io.pleo.antaeus.models.Invoice
 import io.pleo.antaeus.models.InvoiceNote
 import io.pleo.antaeus.models.InvoiceStatus
+import mu.KLogger
+import mu.KotlinLogging
 
-class InvoiceService(private val dal: AntaeusDal) {
+class InvoiceService(
+    private val dal: AntaeusDal,
+    private val logger: KLogger = KotlinLogging.logger{}
+    ) {
     fun fetchAll(status:String?): List<Invoice> {
 
         return if(status.isNullOrBlank()){
@@ -26,10 +31,12 @@ class InvoiceService(private val dal: AntaeusDal) {
     }
 
     fun paidInvoice(invoice: Invoice):Invoice{
+        logger.error { "Invoice "+invoice.id +" payment successful" }
         return dal.paidInvoice(invoice.id) ?: throw InvoiceNotFoundException(invoice.id)
     }
 
-    fun failedPaymentInvoice(invoice: Invoice,note:InvoiceNote):Invoice{
+    fun failedPaymentInvoice(invoice: Invoice, note:InvoiceNote):Invoice{
+        logger.error { "Invoice "+invoice.id +": "+ note.note }
         return dal.failedPaymentInvoice(invoice.id,note) ?: throw InvoiceNotFoundException(invoice.id)
     }
 

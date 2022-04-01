@@ -16,7 +16,7 @@ fun ResultRow.toInvoice(): Invoice = Invoice(
     ),
     status = InvoiceStatus.valueOf(this[InvoiceTable.status]),
     customerId = this[InvoiceTable.customerId],
-    note = InvoiceNote.getEnumByString(this[InvoiceTable.note]).note
+    note = this[InvoiceTable.note]
 )
 
 fun ResultRow.toCustomer(): Customer = Customer(

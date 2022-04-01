@@ -41,36 +41,3 @@ internal fun getPaymentProvider(): PaymentProvider {
         }
     }
 }
-
-
-fun getTimeTilNextMonth():Long{
-    val logger = KotlinLogging.logger{}
-    val nowCalendar = Calendar.getInstance()
-
-
-    val nextMonthCalendar = Calendar.getInstance()
-
-    //IF DECEMBER ADVANCE A YEAR AND RESET MONTH
-    if (nowCalendar.get(Calendar.MONTH) == 11){
-        nextMonthCalendar.set(Calendar.MONTH,0)
-        nextMonthCalendar.set(Calendar.YEAR,nowCalendar.get(Calendar.YEAR)+1)
-    }else{
-        nextMonthCalendar.set(Calendar.MONTH,nowCalendar.get(Calendar.MONTH)+1)
-    }
-    nextMonthCalendar.set(Calendar.DAY_OF_MONTH,1)
-    nextMonthCalendar.set(Calendar.HOUR_OF_DAY,0)
-    nextMonthCalendar.clear(Calendar.MINUTE)
-    nextMonthCalendar.clear(Calendar.SECOND)
-    nextMonthCalendar.clear(Calendar.MILLISECOND)
-
-    logger.info{"Today is "+nowCalendar.timeInMillis}
-    logger.info{"Next Time it will process bills"+nextMonthCalendar.timeInMillis}
-
-
-
-    logger.info{"Hours til next trigger"+
-            TimeUnit.MILLISECONDS.toMinutes(nextMonthCalendar.timeInMillis-nowCalendar.timeInMillis)}
-
-
-    return nextMonthCalendar.timeInMillis-nowCalendar.timeInMillis
-}

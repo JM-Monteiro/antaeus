@@ -57,16 +57,22 @@ class AntaeusDal(private val db: Database) {
     }
 
     fun paidInvoice(id:Int):Invoice?{
-        InvoiceTable.update({InvoiceTable.id eq id}){
-            it[this.status] = InvoiceStatus.PAID.toString()
-            it[this.note] = InvoiceNote.NONE.note
+        transaction(db) {
+            InvoiceTable
+                .update({InvoiceTable.id eq id}){
+                    it[this.status] = InvoiceStatus.PAID.toString()
+                    it[this.note] = InvoiceNote.NONE.note
+            }
         }
         return fetchInvoice(id)
     }
 
-    fun failedPaymentInvoice(id:Int,note:InvoiceNote):Invoice?{
-        InvoiceTable.update({InvoiceTable.id eq id}){
-            it[this.note] = note.note
+    fun failedPaymentInvoice(id:Int,newNote:InvoiceNote):Invoice?{
+        transaction(db) {
+            InvoiceTable
+                .update({InvoiceTable.id eq id}){
+                    it[this.note] = newNote.note
+            }
         }
         return fetchInvoice(id)
     }
