@@ -15,7 +15,8 @@ that processes all pending invoices. If an exception is thrown during in functio
 the invoice in order to notify the customer and admins. In the case of a Network error a timer is set that will trigger 
 the billing process after an hour with a maximum number of retries.
 
-The billing process can be triggered manually by the API as well.
+
+This solution took around 9 to 10 hours to implement plus and additional hour to write this README.
 
 ---
 
@@ -91,8 +92,7 @@ an invoice that was already paid it returns a 409 HTTP error.
 * Created unit tests for the Billing Service.
 * Changed the Docker port mapping to 7070 (port conflict related).
 * Create the necessary exceptions to handle all errors.
-* Had fun learning more about Kotlin and solving this challange.
-
+* Had fun learning more about Kotlin and solving this challenge.
 
 
 ---
