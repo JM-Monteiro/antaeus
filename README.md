@@ -75,7 +75,7 @@ a timer's period between triggers. After searching and thinking for I while, I r
 create a schedule, and after it triggers, delete it and create a new one with a different time delay. 
 That was exactly what I did in the `billProcessingTrigger()` function, which calls the batch processing function, 
 deletes the current schedule and creates a new schedule. 
-The logic to calculate the time until the next month is in the `getTimeTilNextMinute()`.
+The logic to calculate the time until the next month is in the `getTimeTilNextMonth()`.
 
 Once I verified that this schedule scheme produced the desired effects, 
 I realized that I could do a similar thing for the network error in the billing process. 
