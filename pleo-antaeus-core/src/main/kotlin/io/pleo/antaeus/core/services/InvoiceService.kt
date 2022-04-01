@@ -30,16 +30,37 @@ class InvoiceService(
         return dal.fetchInvoice(id) ?: throw InvoiceNotFoundException(id)
     }
 
+
+    /**
+     * Changes an invoice status to "Paid".
+     * @param invoice successfully charged invoice.
+     * @throws InvoiceNotFoundException
+     * @return The invoice after the database update.
+     */
     fun paidInvoice(invoice: Invoice):Invoice{
-        logger.error { "Invoice "+invoice.id +" payment successful" }
+        logger.error { "Invoice %d payment successful".format(invoice.id) }
         return dal.paidInvoice(invoice.id) ?: throw InvoiceNotFoundException(invoice.id)
     }
 
+
+    /**
+     * Adds a note to a pending invoice that failed the charge process.
+     * @param invoice The failed invoice
+     * @param note The error that has occurred.
+     * @throws InvoiceNotFoundException
+     * @return the invoice after database update.
+     */
     fun failedPaymentInvoice(invoice: Invoice, note:InvoiceNote):Invoice{
-        logger.error { "Invoice "+invoice.id +": "+ note.note }
+        logger.error { "Invoice %d has failed. Reason: %s".format(invoice.id,note.note)}
         return dal.failedPaymentInvoice(invoice.id,note) ?: throw InvoiceNotFoundException(invoice.id)
     }
 
+
+    /**
+     * Fetches all invoice that have a given status.
+     * @param status PAID or PENDING.
+     * @throws InvoiceNotFoundException
+     */
     private fun fetchByStatus(status: String): List<Invoice> {
         val invoiceStatus: InvoiceStatus = try {
             InvoiceStatus.valueOf(status)

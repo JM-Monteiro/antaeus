@@ -7,9 +7,8 @@ import io.pleo.antaeus.models.InvoiceNote
 import io.pleo.antaeus.models.InvoiceStatus
 import mu.KLogger
 import mu.KotlinLogging
-import java.text.SimpleDateFormat
+import java.time.Duration
 import java.util.*
-import java.util.concurrent.TimeUnit
 import kotlin.concurrent.schedule
 
 class BillingService(
@@ -19,10 +18,15 @@ class BillingService(
     private val logger: KLogger = KotlinLogging.logger{}
 ) {
 
+
+    /**
+     * Processes the bills in the first day of each month.
+     * @return The list of processed invoices.
+     */
     fun billProcessingTrigger(): List<Invoice> {
         logger.info {"Processing invoices"}
         val invoices = processAllPendingInvoices()
-        logger.info {"Processed "+invoices.size+" invoices"}
+        logger.info {"Processed %d invoices".format(invoices.size)}
         Timer("BillProcessing").cancel()
         Timer("BillProcessing",false).schedule(getTimeTilNextMonth()){
            billProcessingTrigger()
@@ -30,7 +34,34 @@ class BillingService(
         return invoices
     }
 
-    // checks the database for the non-processed invoices and charges the client the necessary amount
+    /**
+     * Repeats the billing process for a failed Invoice due to network error
+     * If the same network error occurs, a timer is launched that triggers after an hour.
+     * This process is only triggered 3 times.
+     * @param failInv The invoice that failed.
+     * @param repeats The current number of retries.
+     */
+    private fun retryNetworkError(failInv: Invoice, repeats: Int){
+        val invoice = processPendingInvoice(failInv.id)
+        if(repeats+1 == 3 || invoice.status == InvoiceStatus.PAID){
+            Timer("NetworkError"+invoice.id).cancel()
+        }else{
+            val backoff = Duration.ofHours(1).toMillis()
+            Timer("NetworkError"+invoice.id,false).schedule(backoff){
+                retryNetworkError(invoice,repeats+1)
+            }
+        }
+
+
+    }
+
+
+
+    /**
+     * Batch processes all invoices that have the Pending status in the database and tries to charge the
+     * customers the necessary amount.
+     * @returns The list of invoices after processing.
+     */
     fun processAllPendingInvoices(): List<Invoice> {
         val pendingInvoices = invoiceService.fetchAll(InvoiceStatus.PENDING.toString())
 
@@ -42,6 +73,13 @@ class BillingService(
         return resultList
     }
 
+    /**
+     * Processes an invoice with a given id and tries to charge the
+     * customer the necessary amount.
+     * @throws InvoiceAlreadyPaidException if invoice was already paid.
+     * @param id The invoice's id.
+     * @returns The invoice after processing.
+     */
     fun processPendingInvoice(id:Int):Invoice{
         logger.info { "Processing invoice $id" }
         val invoice = invoiceService.fetch(id)
@@ -55,6 +93,14 @@ class BillingService(
     }
 
 
+    /**
+     * Executes the payment. Checks if customer exists and the currency type match.
+     * If any error occurs during the payment, an appropriate note is added to the invoice.
+     * In the case of the NetworkException, the function prepares the invoice to be processed at a later date with a
+     * maximum retries of 3.
+     * @param invoice The invoice that will be processed.
+     * @returns The invoice after processing.
+     */
     private fun executePayment(invoice: Invoice): Invoice {
         var note = InvoiceNote.NONE
         var status = false
@@ -63,23 +109,31 @@ class BillingService(
             val customer = customerService.fetch(invoice.customerId)
 
             if (customer.currency != invoice.amount.currency) {
-                logger.error { "Invoice "+ invoice.id+" and customer "+ customer.id + "have different currency" }
+                logger.error { "Invoice %d and customer %d have different currency".format(invoice.id,customer.id)}
                 note = InvoiceNote.DIFFERENTCURRENCY
             } else {
                 status = paymentProvider.charge(invoice)
                 if (!status) {
-                    logger.error { "Customer "+ customer.id + " has no funds" }
+                    logger.error { "Customer %d has no funds".format(customer.id) }
                     note = InvoiceNote.NOFUNDS
                 }
             }
-        } catch (e: Exception) {
+        } catch (e: Exception) { // an error as occurred
             note = when (e) {
                 is NetworkException -> {
-                    logger.error { "Network error" }
+
+                    //retries the billing process 3 times
+                    val backoff = Duration.ofHours(1).toMillis()
+                    logger.error {"Network error trying again in 1 hour"}
+                    //sets a timer for this specific invoice
+                    Timer("NetworkError"+invoice.id,false).schedule(backoff){
+                        retryNetworkError(invoice,0)
+                    }
+
                     InvoiceNote.NETWORKERROR
                 }
                 is CustomerNotFoundException -> {
-                    logger.error { "No customer with id "+ invoice.customerId + "found" }
+                    logger.error { "No customer with id %d was found.".format(invoice.customerId)}
                     InvoiceNote.NOCUSTOMER
                 }
                 //prevent unsupported exceptions
@@ -99,7 +153,10 @@ class BillingService(
     }
 
 
-
+    /**
+     * Calculates the time in milliseconds until the next month's start.
+     * @returns The time in milliseconds
+     */
     fun getTimeTilNextMonth():Long{
 
         val nowCalendar = Calendar.getInstance()
@@ -107,7 +164,7 @@ class BillingService(
 
         val nextMonthCalendar = Calendar.getInstance()
 
-        //IF DECEMBER ADVANCE A YEAR AND RESET MONTH
+        //If it is December, advance a year and resets month.
         if (nowCalendar.get(Calendar.MONTH) == Calendar.DECEMBER){
             nextMonthCalendar.set(Calendar.MONTH,Calendar.JANUARY)
             nextMonthCalendar.set(Calendar.YEAR,nowCalendar.get(Calendar.YEAR)+1)
@@ -121,10 +178,10 @@ class BillingService(
         nextMonthCalendar.clear(Calendar.SECOND)
         nextMonthCalendar.clear(Calendar.MILLISECOND)
 
-        val today = Date.from(nowCalendar.toInstant());
+        val today = Date.from(nowCalendar.toInstant())
         logger.info{ "Today is $today" }
 
-        val nextTime = Date.from(nextMonthCalendar.toInstant());
+        val nextTime = Date.from(nextMonthCalendar.toInstant())
         logger.info{"Will process again at: $nextTime"}
 
 
@@ -135,13 +192,10 @@ class BillingService(
 
 
     /*
-
     test function
     fun getTimeTilNextMinute():Long{
 
         val nowCalendar = Calendar.getInstance()
-
-
         val nextMonthCalendar = Calendar.getInstance()
 
         nextMonthCalendar.set(Calendar.SECOND,nowCalendar.get(Calendar.SECOND)+15)
@@ -151,8 +205,6 @@ class BillingService(
 
         val nextTime = Date.from(nextMonthCalendar.toInstant());
         logger.info{"Will process again at: $nextTime"}
-
-
 
         return nextMonthCalendar.timeInMillis-nowCalendar.timeInMillis
     }*/

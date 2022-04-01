@@ -12,7 +12,7 @@ import io.pleo.antaeus.core.services.BillingService
 import io.pleo.antaeus.core.services.CustomerService
 import io.pleo.antaeus.core.services.InvoiceService
 import mu.KotlinLogging
-import java.util.*
+
 
 private val logger = KotlinLogging.logger {}
 private val thisFile: () -> Unit = {}
@@ -93,12 +93,14 @@ class AntaeusRest(
 
                     path("billing") {
                         // URL: /rest/v1/billing
-                        post() {
+                        post {
+                            // manual trigger for all invoices
                             it.json(billingService.billProcessingTrigger())
                         }
 
                         // URL: /rest/v1/billing/{:id}
                         post(":id") {
+                            // processes a single invoice
                             it.json(billingService.processPendingInvoice(it.pathParam("id").toInt()))
                         }
                     }

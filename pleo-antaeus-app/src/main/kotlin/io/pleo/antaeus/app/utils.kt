@@ -5,10 +5,7 @@ import io.pleo.antaeus.models.Currency
 import io.pleo.antaeus.models.Invoice
 import io.pleo.antaeus.models.InvoiceStatus
 import io.pleo.antaeus.models.Money
-import mu.KotlinLogging
 import java.math.BigDecimal
-import java.util.Calendar
-import java.util.concurrent.TimeUnit
 import kotlin.random.Random
 
 // This will create all schemas and setup initial data
@@ -41,3 +38,5 @@ internal fun getPaymentProvider(): PaymentProvider {
         }
     }
 }
+
+
