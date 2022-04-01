@@ -92,7 +92,7 @@ an invoice that was already paid it returns a 409 HTTP error.
 * In the `AntaeusApp.kt` I've added the first call of the invoice processing timer and added the billing service to the REST service.
 * Created unit tests for the Billing Service.
 * Changed the Docker port mapping to 7070 (port conflict related).
-* Create the necessary exceptions to handle all errors.
+* Created the necessary exceptions to handle all errors.
 * Had fun learning more about Kotlin and solving this challenge.
 
 
@@ -102,6 +102,7 @@ an invoice that was already paid it returns a 409 HTTP error.
 * Distribute the monolithic architecture by the different services to scale the services appropriately and prevent total loss of service.
 * Separate the database from the application.
 ---
+
 
 ## Antaeus
 
