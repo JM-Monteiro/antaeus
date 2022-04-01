@@ -10,13 +10,13 @@ The document first gives an overview of my solution, and then it breaks down the
 ## 1 - Overview
 
 
-The solution as it stands has a timer that calculates the time until the first day of the next month and triggers a function
-that processes all pending invoices. If an exception is thrown during in function the error is caught and a note is added to
+The solution as it stands has a timer that calculates the time until the first day of the next month, and triggers a function
+that processes all pending invoices. If an exception is thrown during, the error is caught and a note is added to
 the invoice in order to notify the customer and admins. In the case of a Network error a timer is set that will trigger 
 the billing process after an hour with a maximum number of retries.
 
 
-This solution took around 9 to 10 hours to implement plus and additional hour to write this README.
+This solution took around 9 to 10 hours to implement plus and additional 1 to 2 hours to write this README.
 
 ---
 
@@ -24,21 +24,21 @@ This solution took around 9 to 10 hours to implement plus and additional hour to
 In order to develop my solution certain parts of the solution's skeleton had to be changed in order to accommodate my implementation:
 
 ### 2.1 - Data Model
-The main modification in the data model is the creation of an Invoice Note(`InvoiceNote.kt`). This enum was implements in order
+The main modification in the data model is the creation of an Invoice Note(`InvoiceNote.kt`). This enum was implemented in order
 to notify the customer and admins of the occurred error by modifying the invoice in the database. It also has the goal of 
 distinguish new pending invoices from those that were already processed.
-It supports the main exceptions and if an unrecognized exception is thrown, a generic note is appended. 
+It supports the main exceptions and if an unrecognized exception is thrown, a generic note is added. 
 The invoice now has a `val note: String` in its data class and all the necessary modifications in `mapings.kt` and in 
 `tables.kt` were implemented.
 
 ### 2.2 - Data Access Layer (DAL)
 
 In `Antaeus.kt` the functions `paidInvoice(id:Int)` and `failedPayment(id:Int,newNote:InvoiceNote)` were implemented with
-the goal of modifying the database with the correct information in the case of a success or a failure in the billing process.
+the goal of modifying the database with the correct information.
 
-The `paidInvoice` modifies the invoice by changing its status.
+* The `paidInvoice` modifies the invoice by changing its status.
 
-The `failedPayment` modifies the invoice by appending a note with the error.
+* The `failedPayment` modifies the invoice by appending a note with the error.
 
 Additionally, the function`fetchInvoicesByStatus(status: InvoiceStatus)` was implemented in order to access the necessary invoices more easily.
 
@@ -52,11 +52,11 @@ that call the correspondent function in the DAL.
 ### 2.4 - Billing Service
 
 This was where most of my time was spent. As mentioned, my first thought process was to create a CRON job but, once I realized
-that it was not so simple to do without adding dependencies (by browsing the depths of the internet), I left that challenge for last.
+(by browsing the depths of the internet) that it was not so simple to do without adding dependencies, I left that challenge for last.
 
 The class receives the two already built services plus the payment provider.
 
-I focused first on building the core logic to handle the billing of the invoices which is handled in the `executePayment(invoice:Invoice)`.
+First, I focused on building the core logic to handle the billing of the invoices, which is handled in the `executePayment(invoice:Invoice)`.
 I first started building the solution to handle just the cases where the payment when smoothly, and it gradually started to become more complex 
 to handle the exception thrown. Depending on the exception or failure by the payment provider, a different note is created to be added to the bill in the database. 
 
@@ -73,10 +73,11 @@ and I started to search in the documentation for a function that would help me i
 I stumbled upon the `kotlin.concurrent.schedule` which allowed me to exactly what I wanted... Except modifying
 a timer's period between triggers. After searching and thinking for I while, I realized that I could simply 
 create a schedule, and after it triggers, delete it and create a new one with a different time delay. 
-That was exactly what I did in the `billProcessingTrigger()` function which calls the batch processing function, 
-deletes and creates a new schedule. The logic to calculate the time until the next month is in the `getTimeTilNextMinute()`.
+That was exactly what I did in the `billProcessingTrigger()` function, which calls the batch processing function, 
+deletes the current schedule and creates a new schedule. 
+The logic to calculate the time until the next month is in the `getTimeTilNextMinute()`.
 
-When I verified that this scheme produced the desired effects (by trying with a delay of 15 seconds instead of several days), 
+Once I verified that this schedule scheme produced the desired effects, 
 I realized that I could do a similar thing for the network error in the billing process. 
 So, I wrote additional logic to retry the process after an hour for a given invoice if the error thrown is the network error. 
 It retries for a maximum of 3 times.
