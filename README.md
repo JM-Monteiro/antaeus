@@ -4,25 +4,25 @@ invoices and charge them all. But once I started browsing the code and reading a
 it was a harder task than I thought.
 
 The document first gives an overview of my solution, and then it breaks down the different parts to give more detail.
-##1 - Overview
 
 ---
+
+## 1 - Overview
+
 
 The solution as it stands has a timer that calculates the time until the first day of the next month and triggers a function
 that processes all pending invoices. If an exception is thrown during in function the error is caught and a note is added to
 the invoice in order to notify the customer and admins. In the case of a Network error a timer is set that will trigger 
 the billing process after an hour with a maximum number of retries.
 
-
-
 The billing process can be triggered manually by the API as well.
 
 ---
 
-##2 - Modifications
+## 2 - Modifications
 In order to develop my solution certain parts of the solution's skeleton had to be changed in order to accommodate my implementation:
 
-###2.1 - Data Model
+### 2.1 - Data Model
 The main modification in the data model is the creation of an Invoice Note(`InvoiceNote.kt`). This enum was implements in order
 to notify the customer and admins of the occurred error by modifying the invoice in the database. It also has the goal of 
 distinguish new pending invoices from those that were already processed.
@@ -30,7 +30,7 @@ It supports the main exceptions and if an unrecognized exception is thrown, a ge
 The invoice now has a `val note: String` in its data class and all the necessary modifications in `mapings.kt` and in 
 `tables.kt` were implemented.
 
-###2.2 - Data Access Layer (DAL)
+### 2.2 - Data Access Layer (DAL)
 
 In `Antaeus.kt` the functions `paidInvoice(id:Int)` and `failedPayment(id:Int,newNote:InvoiceNote)` were implemented with
 the goal of modifying the database with the correct information in the case of a success or a failure in the billing process.
@@ -41,14 +41,14 @@ The `failedPayment` modifies the invoice by appending a note with the error.
 
 Additionally, the function`fetchInvoicesByStatus(status: InvoiceStatus)` was implemented in order to access the necessary invoices more easily.
 
-###2.3 - Invoice Service
+### 2.3 - Invoice Service
 The invoice service was modified to call the new functions in the DAL.
 
 Three functions were implemented: `failedPaymentInvoice()`, `paidInvoice()` and `fetchByStatus()` 
 that call the correspondent function in the DAL.
 
 
-###2.4 - Billing Service
+### 2.4 - Billing Service
 
 This was where most of my time was spent. As mentioned, my first thought process was to create a CRON job but, once I realized
 that it was not so simple to do without adding dependencies (by browsing the depths of the internet), I left that challenge for last.
@@ -81,12 +81,12 @@ So, I wrote additional logic to retry the process after an hour for a given invo
 It retries for a maximum of 3 times.
 
 
-###2.5 - REST API
+### 2.5 - REST API
 In the REST API, I have added a query parameter to the endpoint that gets all invoices in order to filter them by status.
 I've also added endpoints to trigger the billing functions manually if necessary. If a user tries to process
 an invoice that was already paid it returns a 409 HTTP error.
 
-###2.6 - Other
+### 2.6 - Other
 * In the `AntaeusApp.kt` I've added the first call of the invoice processing timer and added the billing service to the REST service.
 * Created unit tests for the Billing Service.
 * Changed the Docker port mapping to 7070 (port conflict related).
