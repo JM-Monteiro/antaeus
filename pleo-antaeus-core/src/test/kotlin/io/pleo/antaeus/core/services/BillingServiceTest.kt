@@ -19,23 +19,23 @@ class BillingServiceTest {
     private val cust2 = Customer(200,Currency.DKK)
 
     //CORRECT VALUE
-    private val inv1 = Invoice(1,100, Money(BigDecimal.valueOf(40),Currency.EUR),InvoiceStatus.PENDING,InvoiceNote.NONE)
-    private val inv11 = Invoice(1,100, Money(BigDecimal.valueOf(40),Currency.EUR),InvoiceStatus.PAID,InvoiceNote.NONE)
+    private val inv1 = Invoice(1,100, Money(BigDecimal.valueOf(40),Currency.EUR),InvoiceStatus.PENDING,InvoiceNote.NONE.note)
+    private val inv11 = Invoice(1,100, Money(BigDecimal.valueOf(40),Currency.EUR),InvoiceStatus.PAID,InvoiceNote.NONE.note)
 
     //DIFFERENT CURRENCY
-    private val inv2 = Invoice(2,100, Money(BigDecimal.valueOf(50),Currency.DKK),InvoiceStatus.PENDING,InvoiceNote.NONE)
-    private val inv21 = Invoice(2,100, Money(BigDecimal.valueOf(50),Currency.DKK),InvoiceStatus.PENDING,InvoiceNote.DIFFERENTCURRENCY)
+    private val inv2 = Invoice(2,100, Money(BigDecimal.valueOf(50),Currency.DKK),InvoiceStatus.PENDING,InvoiceNote.NONE.note)
+    private val inv21 = Invoice(2,100, Money(BigDecimal.valueOf(50),Currency.DKK),InvoiceStatus.PENDING,InvoiceNote.DIFFERENTCURRENCY.note)
 
     //ALREADY PAID
-    private val inv3 = Invoice(3,100, Money(BigDecimal.valueOf(50),Currency.EUR),InvoiceStatus.PAID,InvoiceNote.NONE)
+    private val inv3 = Invoice(3,100, Money(BigDecimal.valueOf(50),Currency.EUR),InvoiceStatus.PAID,InvoiceNote.NONE.note)
 
     //NO USER
-    private val inv4 = Invoice(4,404, Money(BigDecimal.valueOf(50),Currency.EUR),InvoiceStatus.PENDING,InvoiceNote.NONE)
-    private val inv41 = Invoice(4,404, Money(BigDecimal.valueOf(50),Currency.EUR),InvoiceStatus.PENDING,InvoiceNote.NOCUSTOMER)
+    private val inv4 = Invoice(4,404, Money(BigDecimal.valueOf(50),Currency.EUR),InvoiceStatus.PENDING,InvoiceNote.NONE.note)
+    private val inv41 = Invoice(4,404, Money(BigDecimal.valueOf(50),Currency.EUR),InvoiceStatus.PENDING,InvoiceNote.NOCUSTOMER.note)
 
     //NO FUNDS
-    private val inv5 = Invoice(5,100, Money(BigDecimal.valueOf(5000000),Currency.EUR),InvoiceStatus.PENDING,InvoiceNote.NONE)
-    private val inv51 = Invoice(5,100, Money(BigDecimal.valueOf(5000000),Currency.EUR),InvoiceStatus.PENDING,InvoiceNote.NOFUNDS)
+    private val inv5 = Invoice(5,100, Money(BigDecimal.valueOf(5000000),Currency.EUR),InvoiceStatus.PENDING,InvoiceNote.NONE.note)
+    private val inv51 = Invoice(5,100, Money(BigDecimal.valueOf(5000000),Currency.EUR),InvoiceStatus.PENDING,InvoiceNote.NOFUNDS.note)
 
     private val pendingList = listOf(inv1,inv2,inv4,inv5)
     private val responseList = listOf(inv11,inv21,inv41,inv51)

@@ -6,5 +6,18 @@ enum class InvoiceNote(val note:String) {
     OTHER("An error has occurred."),
     DIFFERENTCURRENCY("Invoice's currency is different from the customer's currency."),
     NOCUSTOMER("No customer associated with this invoice."),
-    NONE("")
+    NONE("");
+
+    companion object {
+    fun getEnumByString(stringValue:String):InvoiceNote{
+        for (value in values()){
+            if (stringValue == value.toString()){
+                return value
+            }
+        }
+        return NONE
+    }
+    }
 }
+
+
