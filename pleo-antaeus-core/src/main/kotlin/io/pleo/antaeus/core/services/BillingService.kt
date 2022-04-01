@@ -46,6 +46,7 @@ class BillingService(
         if(repeats+1 == 3 || invoice.status == InvoiceStatus.PAID){
             Timer("NetworkError"+invoice.id).cancel()
         }else{
+            Timer("NetworkError"+invoice.id).cancel()
             val backoff = Duration.ofHours(1).toMillis()
             Timer("NetworkError"+invoice.id,false).schedule(backoff){
                 retryNetworkError(invoice,repeats+1)
