@@ -7,6 +7,7 @@ import io.pleo.antaeus.models.InvoiceNote
 import io.pleo.antaeus.models.InvoiceStatus
 import mu.KLogger
 import mu.KotlinLogging
+import java.text.SimpleDateFormat
 import java.util.*
 import java.util.concurrent.TimeUnit
 import kotlin.concurrent.schedule
@@ -18,7 +19,7 @@ class BillingService(
     private val logger: KLogger = KotlinLogging.logger{}
 ) {
 
-    fun billProcessingTrigger(){
+    fun billProcessingTrigger(): List<Invoice> {
         logger.info {"Processing invoices"}
         val invoices = processAllPendingInvoices()
         logger.info {"Processed "+invoices.size+" invoices"}
@@ -26,6 +27,7 @@ class BillingService(
         Timer("BillProcessing",false).schedule(getTimeTilNextMonth()){
            billProcessingTrigger()
         }
+        return invoices
     }
 
     // checks the database for the non-processed invoices and charges the client the necessary amount
@@ -80,7 +82,6 @@ class BillingService(
                     logger.error { "No customer with id "+ invoice.customerId + "found" }
                     InvoiceNote.NOCUSTOMER
                 }
-
                 //prevent unsupported exceptions
                 else -> {
                     logger.error { "An error has occurred" }
@@ -107,8 +108,8 @@ class BillingService(
         val nextMonthCalendar = Calendar.getInstance()
 
         //IF DECEMBER ADVANCE A YEAR AND RESET MONTH
-        if (nowCalendar.get(Calendar.MONTH) == 11){
-            nextMonthCalendar.set(Calendar.MONTH,0)
+        if (nowCalendar.get(Calendar.MONTH) == Calendar.DECEMBER){
+            nextMonthCalendar.set(Calendar.MONTH,Calendar.JANUARY)
             nextMonthCalendar.set(Calendar.YEAR,nowCalendar.get(Calendar.YEAR)+1)
         }else{
             nextMonthCalendar.set(Calendar.MONTH,nowCalendar.get(Calendar.MONTH)+1)
@@ -120,16 +121,40 @@ class BillingService(
         nextMonthCalendar.clear(Calendar.SECOND)
         nextMonthCalendar.clear(Calendar.MILLISECOND)
 
-        logger.info{"Today is "+nowCalendar.timeInMillis}
-        logger.info{"Next Time it will process bills "+nextMonthCalendar.timeInMillis}
+        val today = Date.from(nowCalendar.toInstant());
+        logger.info{ "Today is $today" }
 
+        val nextTime = Date.from(nextMonthCalendar.toInstant());
+        logger.info{"Will process again at: $nextTime"}
 
-
-        logger.info{"Hours til next trigger "+
-                TimeUnit.MILLISECONDS.toMinutes(nextMonthCalendar.timeInMillis-nowCalendar.timeInMillis)}
 
 
         return nextMonthCalendar.timeInMillis-nowCalendar.timeInMillis
     }
+
+
+
+    /*
+
+    test function
+    fun getTimeTilNextMinute():Long{
+
+        val nowCalendar = Calendar.getInstance()
+
+
+        val nextMonthCalendar = Calendar.getInstance()
+
+        nextMonthCalendar.set(Calendar.SECOND,nowCalendar.get(Calendar.SECOND)+15)
+
+        val today = Date.from(nowCalendar.toInstant());
+        logger.info{ "Today is $today" }
+
+        val nextTime = Date.from(nextMonthCalendar.toInstant());
+        logger.info{"Will process again at: $nextTime"}
+
+
+
+        return nextMonthCalendar.timeInMillis-nowCalendar.timeInMillis
+    }*/
 
 }
